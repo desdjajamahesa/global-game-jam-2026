@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 enum Objectives
 {
@@ -9,6 +10,8 @@ enum Objectives
 public class MainObjective : MonoBehaviour
 {
     [SerializeField] private Objectives objectives;
+    public static Action onPlayerGoalsComplete;
+    public static Action onShadowGoalsComplete;
     
     private int playerLayer;
     private int shadowLayer;
@@ -25,8 +28,14 @@ public class MainObjective : MonoBehaviour
         // Check for E key press while correct object is in trigger
         if (correctObjectInTrigger && Input.GetKeyDown(KeyCode.E))
         {
-            Debug.Log("Objective " + objectives + " Complete");
-            // Add your objective completion logic here
+            if (objectives == Objectives.Player)
+            {
+                onPlayerGoalsComplete?.Invoke();
+            }
+            if (objectives == Objectives.Shadow)
+            {
+                onShadowGoalsComplete?.Invoke();
+            }
         }
     }
 
@@ -42,6 +51,7 @@ public class MainObjective : MonoBehaviour
         if (objectives == Objectives.Shadow && other.gameObject.layer == shadowLayer)
         {
             correctObjectInTrigger = true;
+
         }
     }
 

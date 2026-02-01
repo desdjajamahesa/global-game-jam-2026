@@ -17,16 +17,21 @@ public class LightingObs : MonoBehaviour
 
     [Header("Component References")]
     [SerializeField] private Light lightComponent;
-    [SerializeField] private ParticleSystem particleFX;
+    [SerializeField] private ParticleSystem playerLight;
+    [SerializeField] private ParticleSystem shadowLight;
 
     private float originalLightIntensity;
-    private float originalEmissionRate;
-    private ParticleSystem.EmissionModule emissionModule;
+    private float originalPlayerEmissionRate;
+    private float originalShadowEmissionRate;
+    private ParticleSystem.EmissionModule playerEmissionModule;
+    private ParticleSystem.EmissionModule shadowEmissionModule;
 
     private float targetLightIntensity;
-    private float targetEmissionRate;
+    private float targetPlayerEmissionRate;
+    private float targetShadowEmissionRate;
     private float currentLightIntensity;
-    private float currentEmissionRate;
+    private float currentPlayerEmissionRate;
+    private float currentShadowEmissionRate;
 
     void Start()
     {
@@ -37,11 +42,18 @@ public class LightingObs : MonoBehaviour
             currentLightIntensity = originalLightIntensity;
         }
 
-        if (particleFX != null)
+        if (playerLight != null)
         {
-            emissionModule = particleFX.emission;
-            originalEmissionRate = emissionModule.rateOverTime.constant;
-            currentEmissionRate = originalEmissionRate;
+            playerEmissionModule = playerLight.emission;
+            originalPlayerEmissionRate = playerEmissionModule.rateOverTime.constant;
+            currentPlayerEmissionRate = originalPlayerEmissionRate;
+        }
+
+        if (shadowLight != null)
+        {
+            shadowEmissionModule = shadowLight.emission;
+            originalShadowEmissionRate = shadowEmissionModule.rateOverTime.constant;
+            currentShadowEmissionRate = 0f; // Start with shadow particles off
         }
 
         // Start the light interval behavior
@@ -75,15 +87,17 @@ public class LightingObs : MonoBehaviour
             float flicker = Mathf.PerlinNoise(Time.time * flickerSpeed, 0f);
             
             targetLightIntensity = Mathf.Lerp(minIntensity, maxIntensity, flicker);
-            targetEmissionRate = originalEmissionRate;
+            targetPlayerEmissionRate = originalPlayerEmissionRate;
+            targetShadowEmissionRate = 0f; // Turn off shadow particles
 
             gameObject.layer = LayerMask.NameToLayer("PlayerLight");
         }
         else
         {
-            // Light is OFF - set targets to 0
+            // Light is OFF - set targets to 0 and enable shadow particles
             targetLightIntensity = 0f;
-            targetEmissionRate = 0f;
+            targetPlayerEmissionRate = 0f; // Turn off player particles
+            targetShadowEmissionRate = originalShadowEmissionRate; // Turn on shadow particles
 
             gameObject.layer = LayerMask.NameToLayer("ShadowLight");
         }
@@ -93,7 +107,8 @@ public class LightingObs : MonoBehaviour
         
         // Fast transition for particles when turning off, normal when turning on
         float currentParticleSpeed = isLightOn ? transitionSpeed : particleTransitionSpeed;
-        currentEmissionRate = Mathf.Lerp(currentEmissionRate, targetEmissionRate, Time.deltaTime * currentParticleSpeed);
+        currentPlayerEmissionRate = Mathf.Lerp(currentPlayerEmissionRate, targetPlayerEmissionRate, Time.deltaTime * currentParticleSpeed);
+        currentShadowEmissionRate = Mathf.Lerp(currentShadowEmissionRate, targetShadowEmissionRate, Time.deltaTime * currentParticleSpeed);
 
         // Apply values
         if (lightComponent != null)
@@ -101,10 +116,16 @@ public class LightingObs : MonoBehaviour
             lightComponent.intensity = currentLightIntensity;
         }
 
-        if (particleFX != null)
+        if (playerLight != null)
         {
-            var emission = particleFX.emission;
-            emission.rateOverTime = currentEmissionRate;
+            var emission = playerLight.emission;
+            emission.rateOverTime = currentPlayerEmissionRate;
+        }
+
+        if (shadowLight != null)
+        {
+            var emission = shadowLight.emission;
+            emission.rateOverTime = currentShadowEmissionRate;
         }
     }
 }

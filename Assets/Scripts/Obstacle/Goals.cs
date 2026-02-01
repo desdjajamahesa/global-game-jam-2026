@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Goals : MonoBehaviour
 {
@@ -11,8 +12,31 @@ public class Goals : MonoBehaviour
     [SerializeField] private int completedPlayerObjectives = 0;
     [SerializeField] private int completedShadowObjectives = 0;
 
+    [Header("Door and Scene Settings")]
+    [SerializeField] private string doorChildName = "TargetedDoor";
+    [SerializeField] private Vector3 doorOpenPosition = new Vector3(0, 6f, 0);
+    [SerializeField] private float doorMoveDuration = 1f;
+    [SerializeField] private bool enableSceneTransition = true;
+    [SerializeField] private string nextSceneName = "";
+
+    private GameObject targetedDoor;
+    private bool doorOpened = false;
+    private bool canTransition = false;
+
     void Start()
     {
+        // Find the door from children
+        Transform doorTransform = transform.Find(doorChildName);
+        if (doorTransform != null)
+        {
+            targetedDoor = doorTransform.gameObject;
+            Debug.Log($"Found targeted door: {doorChildName}");
+        }
+        else
+        {
+            Debug.LogWarning($"Child GameObject '{doorChildName}' not found!");
+        }
+
         // Auto-detect objectives in the scene if enabled
         if (autoDetectObjectives)
         {
@@ -77,7 +101,64 @@ public class Goals : MonoBehaviour
     void OpenGoals()
     {
         Debug.Log("Next stage is available!");
-        // Add your level completion logic here
+        
+        if (!doorOpened && targetedDoor != null)
+        {
+            // Move the door to the open position
+            StartCoroutine(MoveDoorToPosition(targetedDoor.transform, doorOpenPosition, doorMoveDuration));
+            doorOpened = true;
+            Debug.Log($"Door moving to position {doorOpenPosition}");
+        }
+
+        // Enable scene transition
+        if (enableSceneTransition)
+        {
+            canTransition = true;
+            Debug.Log("Scene transition enabled - enter the trigger to load next scene");
+        }
+    }
+
+    private System.Collections.IEnumerator MoveDoorToPosition(Transform doorTransform, Vector3 targetPosition, float duration)
+    {
+        Vector3 startPosition = doorTransform.localPosition;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            doorTransform.localPosition = Vector3.Lerp(startPosition, targetPosition, t);
+            yield return null;
+        }
+
+        doorTransform.localPosition = targetPosition;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Check if can transition and if player or shadow entered
+        if (canTransition && enableSceneTransition)
+        {
+            // Check if it's the player or shadow (adjust layer check as needed)
+            if (other.CompareTag("Player") || other.gameObject.layer == LayerMask.NameToLayer("Player") || 
+                other.gameObject.layer == LayerMask.NameToLayer("Shadow"))
+            {
+                LoadNextScene();
+            }
+        }
+    }
+
+    private void LoadNextScene()
+    {
+        if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            Debug.Log($"Loading next scene: {nextSceneName}");
+            SceneManager.LoadScene(nextSceneName);
+        }
+        else
+        {
+            Debug.LogWarning("Next scene name is not set!");
+        }
     }
 
     // Public methods to get progress

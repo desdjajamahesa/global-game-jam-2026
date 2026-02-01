@@ -5,8 +5,8 @@ using UnityEngine;
 public class SlidingGate : MonoBehaviour
 {
     [Header("Sliding Gate Settings")]
-    public float closedY = 2.5f;
-    public float openY = -2.5f;
+    public float closedY = 0f;
+    public float openY = 6f;
     public float moveSpeed = 5f;
     private float targetY;
 

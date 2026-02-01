@@ -22,7 +22,8 @@ public class PlayerStateManager : MonoBehaviour
     [Header("Shadow Config")]
     [SerializeField] private float slideDistance = 5f;
     [SerializeField] private float slideDuration = 0.5f;
-    [SerializeField] private bool shadowPassThroughWalls = true;
+    [SerializeField] private bool shadowPassThroughWalls = false;
+    [SerializeField] private LayerMask wallLayers; // Layers that should block shadow spawn
 
     public static Action onAwakeActive;
     public static Action onAstralActive;
@@ -74,21 +75,37 @@ public class PlayerStateManager : MonoBehaviour
         // Immediately switch control to shadow
         controlShadow = true;
         
-        // Optionally disable collisions during slide
-        if (shadowPassThroughWalls && shadowRb != null)
-        {
-            shadowRb.detectCollisions = false;
-        }
-        
-        // Slide shadow in opposite direction of player's facing (behind the player)
+        // Calculate slide direction
         Vector3 slideDirection = -playerController.GetFacingDirection();
-        Vector3 targetPos = shadowBody.transform.position + slideDirection * slideDistance;
+        Vector3 startPos = shadowBody.transform.position;
+        Vector3 targetPos = startPos + slideDirection * slideDistance;
+        
+        // Check for obstacles and adjust target position
+        if (!shadowPassThroughWalls)
+        {
+            RaycastHit hit;
+            float checkDistance = slideDistance + 0.5f; // Add small buffer
+            
+            if (Physics.Raycast(startPos, slideDirection, out hit, checkDistance, wallLayers))
+            {
+                // Hit a wall, stop before it
+                targetPos = hit.point + (-slideDirection * 0.2f); // Stop 0.2 units before wall
+            }
+        }
+        else
+        {
+            // Optionally disable collisions during slide if passing through walls
+            if (shadowRb != null)
+            {
+                shadowRb.detectCollisions = false;
+            }
+        }
         
         // Use Rigidbody.DOMove for physics-based movement
         if (shadowRb != null)
         {
             shadowRb.DOMove(targetPos, slideDuration).SetEase(Ease.OutQuad).OnComplete(() => {
-                // Re-enable collisions after slide
+                // Re-enable collisions after slide if they were disabled
                 if (shadowPassThroughWalls)
                 {
                     shadowRb.detectCollisions = true;

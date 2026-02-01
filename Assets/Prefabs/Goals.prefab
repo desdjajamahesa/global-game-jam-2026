@@ -101,6 +101,11 @@ MonoBehaviour:
   autoDetectObjectives: 1
   completedPlayerObjectives: 0
   completedShadowObjectives: 0
+  doorChildName: Enviroment__Pintu
+  doorOpenPosition: {x: 0, y: 6, z: 0}
+  doorMoveDuration: 2.5
+  enableSceneTransition: 1
+  nextSceneName: Stage 2
 --- !u!1 &3377530588084793003
 GameObject:
   m_ObjectHideFlags: 0

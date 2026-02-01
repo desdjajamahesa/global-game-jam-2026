@@ -68,8 +68,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   closedY: 0
-  openY: 2.5
-  moveSpeed: 1
+  openY: 6
+  moveSpeed: 2.5
+  gateCollider: {fileID: 0}
 --- !u!1001 &6762166126888042607
 PrefabInstance:
   m_ObjectHideFlags: 0

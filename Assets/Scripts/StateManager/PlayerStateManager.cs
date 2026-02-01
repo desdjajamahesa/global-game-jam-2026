@@ -22,6 +22,7 @@ public class PlayerStateManager : MonoBehaviour
     [Header("Shadow Config")]
     [SerializeField] private float slideDistance = 5f;
     [SerializeField] private float slideDuration = 0.5f;
+    [SerializeField] private bool shadowPassThroughWalls = true;
 
     public static Action onAwakeActive;
     public static Action onAstralActive;
@@ -31,12 +32,16 @@ public class PlayerStateManager : MonoBehaviour
 
     private bool isTransitioning = false;
     private bool controlShadow = false; // Tracks which body is actively controlled
+    private int originalShadowLayer;
 
     void Start()
     {
         shadowBody.SetActive(false);
         currentState = awakeState;
         currentState.EnterState(this);
+        
+        // Store the original shadow layer
+        originalShadowLayer = shadowBody.layer;
     }
 
     void Update()
@@ -69,14 +74,36 @@ public class PlayerStateManager : MonoBehaviour
         // Immediately switch control to shadow
         controlShadow = true;
         
+        // Optionally disable collisions during slide
+        if (shadowPassThroughWalls && shadowRb != null)
+        {
+            shadowRb.detectCollisions = false;
+        }
+        
         // Slide shadow in opposite direction of player's facing (behind the player)
         Vector3 slideDirection = -playerController.GetFacingDirection();
         Vector3 targetPos = shadowBody.transform.position + slideDirection * slideDistance;
         
-        shadowBody.transform.DOMove(targetPos, slideDuration).OnComplete(() => {
-            isTransitioning = false;
-            currentState.EnterState(this);
-        });
+        // Use Rigidbody.DOMove for physics-based movement
+        if (shadowRb != null)
+        {
+            shadowRb.DOMove(targetPos, slideDuration).SetEase(Ease.OutQuad).OnComplete(() => {
+                // Re-enable collisions after slide
+                if (shadowPassThroughWalls)
+                {
+                    shadowRb.detectCollisions = true;
+                }
+                isTransitioning = false;
+                currentState.EnterState(this);
+            });
+        }
+        else
+        {
+            shadowBody.transform.DOMove(targetPos, slideDuration).SetEase(Ease.OutQuad).OnComplete(() => {
+                isTransitioning = false;
+                currentState.EnterState(this);
+            });
+        }
     }
 
     public void SwitchToAwake()
@@ -88,13 +115,38 @@ public class PlayerStateManager : MonoBehaviour
         currentState.ExitState(this);
         currentState = awakeState;
         
+        // Disable collisions during return slide
+        if (shadowPassThroughWalls && shadowRb != null)
+        {
+            shadowRb.detectCollisions = false;
+        }
+        
         // Slide shadow back to player
-        shadowBody.transform.DOMove(playerBody.transform.position, slideDuration).OnComplete(() => {
-            shadowBody.SetActive(false);
-            controlShadow = false; // Switch control back to player after shadow vanishes
-            isTransitioning = false;
-            currentState.EnterState(this);
-        });
+        if (shadowRb != null)
+        {
+            shadowRb.DOMove(playerBody.transform.position, slideDuration).SetEase(Ease.InQuad).OnComplete(() => {
+                shadowBody.SetActive(false);
+                controlShadow = false;
+                isTransitioning = false;
+                
+                // Re-enable collisions when shadow is deactivated
+                if (shadowPassThroughWalls)
+                {
+                    shadowRb.detectCollisions = true;
+                }
+                
+                currentState.EnterState(this);
+            });
+        }
+        else
+        {
+            shadowBody.transform.DOMove(playerBody.transform.position, slideDuration).SetEase(Ease.InQuad).OnComplete(() => {
+                shadowBody.SetActive(false);
+                controlShadow = false;
+                isTransitioning = false;
+                currentState.EnterState(this);
+            });
+        }
     }
 
     public bool IsAwakeState()

@@ -16,6 +16,7 @@ public class MainObjective : MonoBehaviour
     private int playerLayer;
     private int shadowLayer;
     private bool correctObjectInTrigger = false;
+    private bool isCompleted = false;
 
     void Start()
     {
@@ -23,20 +24,38 @@ public class MainObjective : MonoBehaviour
         shadowLayer = LayerMask.NameToLayer("Shadow");
     }
 
+    // Public method to get objective type for auto-detection
+    public string GetObjectiveType()
+    {
+        return objectives.ToString();
+    }
+
     void Update()
     {
-        // Check for E key press while correct object is in trigger
-        if (correctObjectInTrigger && Input.GetKeyDown(KeyCode.E))
+        // Check for E key press while correct object is in trigger and not already completed
+        if (correctObjectInTrigger && !isCompleted && Input.GetKeyDown(KeyCode.E))
         {
-            if (objectives == Objectives.Player)
-            {
-                onPlayerGoalsComplete?.Invoke();
-            }
-            if (objectives == Objectives.Shadow)
-            {
-                onShadowGoalsComplete?.Invoke();
-            }
+            CompleteObjective();
         }
+    }
+
+    void CompleteObjective()
+    {
+        isCompleted = true;
+        
+        if (objectives == Objectives.Player)
+        {
+            Debug.Log("Player objective completed!");
+            onPlayerGoalsComplete?.Invoke();
+        }
+        else if (objectives == Objectives.Shadow)
+        {
+            Debug.Log("Shadow objective completed!");
+            onShadowGoalsComplete?.Invoke();
+        }
+        
+        // Optional: Disable or visually change the objective after completion
+        // gameObject.SetActive(false);
     }
 
     private void OnTriggerEnter(Collider other) 

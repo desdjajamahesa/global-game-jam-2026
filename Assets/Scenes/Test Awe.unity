@@ -13393,6 +13393,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Goals (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 4949381646658012026, guid: 9da701d4fab362c4e8e6d08fa6f6bd1b,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -15565,7 +15570,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1132242909
 Transform:
   m_ObjectHideFlags: 0

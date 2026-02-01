@@ -162,6 +162,12 @@ public class Goals : MonoBehaviour
     }
 
     // Public methods to get progress
+    // Public getters for UI access
+    public int RequiredPlayerObjectives => requiredPlayerObjectives;
+    public int RequiredShadowObjectives => requiredShadowObjectives;
+    public int CompletedPlayerObjectives => completedPlayerObjectives;
+    public int CompletedShadowObjectives => completedShadowObjectives;
+
     public float GetPlayerProgress()
     {
         if (requiredPlayerObjectives == 0) return 1f;

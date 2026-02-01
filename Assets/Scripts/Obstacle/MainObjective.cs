@@ -15,6 +15,8 @@ public class MainObjective : MonoBehaviour
     
     private int playerLayer;
     private int shadowLayer;
+    [SerializeField] private ParticleSystem splashParticle;
+    [SerializeField] private int splashEmitCount = 30;
     private bool correctObjectInTrigger = false;
     private bool isCompleted = false;
 
@@ -22,6 +24,18 @@ public class MainObjective : MonoBehaviour
     {
         playerLayer = LayerMask.NameToLayer("Player");
         shadowLayer = LayerMask.NameToLayer("Shadow");
+
+        // Auto-assign particle system if not set in inspector
+        if (splashParticle == null)
+            splashParticle = GetComponentInChildren<ParticleSystem>();
+
+        // Ensure particle does not play automatically on Awake/Start
+        if (splashParticle != null)
+        {
+            var main = splashParticle.main;
+            main.playOnAwake = false;
+            splashParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
     }
 
     // Public method to get objective type for auto-detection
@@ -42,6 +56,14 @@ public class MainObjective : MonoBehaviour
     void CompleteObjective()
     {
         isCompleted = true;
+
+        // Emit a one-shot splash burst if available
+        if (splashParticle != null)
+        {
+            splashParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            splashParticle.Clear();
+            splashParticle.Emit(Mathf.Max(1, splashEmitCount));
+        }
         
         if (objectives == Objectives.Player)
         {

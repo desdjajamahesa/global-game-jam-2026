@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a77fafcc6bd2ee94ebe9ac341b986e7a, type: 3}
+  m_Name: Shadow
+  m_EditorClassIdentifier: 
+  SpriteAnimations:
+  - Name: Front
+    FPS: 0
+    Frames:
+    - {fileID: -1937608961, guid: 9af83fddec5e6824394f7845f791d53a, type: 3}
+    SpriteAnimationType: 1
+  - Name: Right
+    FPS: 0
+    Frames:
+    - {fileID: -704215618, guid: 9af83fddec5e6824394f7845f791d53a, type: 3}
+    SpriteAnimationType: 1
+  - Name: Left
+    FPS: 0
+    Frames:
+    - {fileID: 149998143, guid: 9af83fddec5e6824394f7845f791d53a, type: 3}
+    SpriteAnimationType: 1
+  - Name: Back
+    FPS: 0
+    Frames:
+    - {fileID: -1202275539, guid: 9af83fddec5e6824394f7845f791d53a, type: 3}
+    SpriteAnimationType: 1

@@ -14,9 +14,9 @@ TagManager:
   - Shadow
   - StaticObs
   - DynamicObs
-  - 
-  - 
-  - 
+  - DarkObs
+  - PlayerLight
+  - ShadowLight
   - 
   - 
   - 
@@ -38,6 +38,12 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: VfxBG
+    uniqueID: 2956041951
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: VfxFront
+    uniqueID: 2530118791
     locked: 0

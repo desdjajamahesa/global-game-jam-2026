@@ -16,17 +16,30 @@ public class PlayerController : MonoBehaviour
     [Header("Component Reference")]
     [SerializeField] private PlayerStateManager playerStateManager;
 
+    [Header("Layer Detection")]
+    [SerializeField] private LayerMask playerLightLayer;
+    [SerializeField] private LayerMask shadowLightLayer;
+
+    [Header("Debug Visualization")]
+    [SerializeField] private bool showDebugVisualization = true;
+    [SerializeField] private LineRenderer circleLineRenderer;
+    [SerializeField] private LineRenderer connectionLineRenderer;
+    [SerializeField] private int circleSegments = 64;
+
     private Vector3 lastMoveDirection = Vector3.forward;
 
     void Start()
     {
         playerRb = GetComponent<Rigidbody>();
+        SetupDebugVisualization();
+        SetupShadowTriggerDetection();
     }
 
 
     void Update()
     {
         MovementControl();
+        UpdateDebugVisualization();
     }
 
 #region InputArea 
@@ -111,7 +124,154 @@ public class PlayerController : MonoBehaviour
 #endregion
 
 #region Behavior
+    private void SetupShadowTriggerDetection()
+    {
+        if (shadowBody != null)
+        {
+            // Add trigger detector to shadow body
+            var shadowDetector = shadowBody.AddComponent<TriggerForwarder>();
+            shadowDetector.Initialize(this);
+        }
+    }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        // Check if Player (Awake state) enters ShadowLight trigger
+        if (playerStateManager.IsAwakeState() && IsInLayerMask(other.gameObject, shadowLightLayer))
+        {
+            HandlePlayerDeath();
+        }
+    }
+
+    public void OnShadowTriggerEnter(Collider other)
+    {
+        // Check if Shadow (Astral state) enters PlayerLight trigger
+        if (playerStateManager.IsAstralState() && IsInLayerMask(other.gameObject, playerLightLayer))
+        {
+            playerStateManager.SwitchToAwake();
+        }
+    }
+
+    public void OnShadowTriggerStay(Collider other)
+    {
+        if (playerStateManager.IsAstralState() && IsInLayerMask(other.gameObject, playerLightLayer))
+        {
+            playerStateManager.SwitchToAwake();
+        }
+    }
+
+    private void HandlePlayerDeath()
+    {
+        Debug.Log("Player died from ShadowLight!");
+        // Add your death logic here (e.g., respawn, game over, etc.)
+        // For now, just logging
+    }
+
+    private bool IsInLayerMask(GameObject obj, LayerMask layerMask)
+    {
+        return ((1 << obj.layer) & layerMask) != 0;
+    }
+
+    // Inner class to forward shadow trigger events
+    private class TriggerForwarder : MonoBehaviour
+    {
+        private PlayerController controller;
+
+        public void Initialize(PlayerController ctrl)
+        {
+            controller = ctrl;
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (controller != null)
+            {
+                controller.OnShadowTriggerEnter(other);
+            }
+        }
+
+        private void OnTriggerStay(Collider other)
+        {
+            if (controller != null)
+            {
+                controller.OnShadowTriggerStay(other);
+            }
+        }
+    }
+#endregion
+
+#region Debug Visualization
+    private void SetupDebugVisualization()
+    {
+        if (!showDebugVisualization) return;
+
+        // Create circle LineRenderer if not assigned
+        if (circleLineRenderer == null)
+        {
+            GameObject circleObj = new GameObject("ShadowRadiusCircle");
+            circleObj.transform.SetParent(playerRb.transform);
+            circleObj.transform.localPosition = Vector3.zero;
+            circleLineRenderer = circleObj.AddComponent<LineRenderer>();
+            circleLineRenderer.startWidth = 0.1f;
+            circleLineRenderer.endWidth = 0.1f;
+            circleLineRenderer.loop = true;
+            circleLineRenderer.useWorldSpace = true;
+            circleLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            circleLineRenderer.startColor = Color.cyan;
+            circleLineRenderer.endColor = Color.cyan;
+            circleLineRenderer.positionCount = circleSegments;
+        }
+
+        // Create connection LineRenderer if not assigned
+        if (connectionLineRenderer == null)
+        {
+            GameObject connectionObj = new GameObject("PlayerShadowConnection");
+            connectionObj.transform.SetParent(transform);
+            connectionObj.transform.localPosition = Vector3.zero;
+            connectionLineRenderer = connectionObj.AddComponent<LineRenderer>();
+            connectionLineRenderer.startWidth = 0.05f;
+            connectionLineRenderer.endWidth = 0.05f;
+            connectionLineRenderer.useWorldSpace = true;
+            connectionLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            connectionLineRenderer.startColor = Color.yellow;
+            connectionLineRenderer.endColor = Color.yellow;
+            connectionLineRenderer.positionCount = 2;
+        }
+    }
+
+    private void UpdateDebugVisualization()
+    {
+        if (!showDebugVisualization) return;
+
+        // Update circle around player
+        if (circleLineRenderer != null && playerRb != null)
+        {
+            Vector3 center = playerRb.transform.position;
+            float angleStep = 360f / circleSegments;
+
+            for (int i = 0; i < circleSegments; i++)
+            {
+                float angle = i * angleStep * Mathf.Deg2Rad;
+                Vector3 point = center + new Vector3(Mathf.Cos(angle) * maxShadowDistance, 0, Mathf.Sin(angle) * maxShadowDistance);
+                circleLineRenderer.SetPosition(i, point);
+            }
+        }
+
+        // Update connection line
+        if (connectionLineRenderer != null && playerRb != null && shadowBody != null)
+        {
+            if (shadowBody.activeSelf && playerStateManager != null && playerStateManager.IsAstralState())
+            {
+                connectionLineRenderer.enabled = true;
+                connectionLineRenderer.SetPosition(0, playerRb.transform.position);
+                connectionLineRenderer.SetPosition(1, shadowBody.transform.position);
+            }
+            else
+            {
+                connectionLineRenderer.enabled = false;
+            }
+        }
+    }
 #endregion
 
     private void OnDrawGizmos()

@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using GabrielBigardi.SpriteAnimator;
 
 public class PlayerController : MonoBehaviour
 {
